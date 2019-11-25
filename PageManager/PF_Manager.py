@@ -17,8 +17,8 @@ class PF_Manager:
     def DestroyFile(self, fileName):
         pass
 
-    def OpenFile(self, fileName):
-        fileHandle = PF_FileHandle(fileName)
+    def OpenFile(self, fileName, attribute_length=16, attribute_format=">ii4sf"):
+        fileHandle = PF_FileHandle(fileName, attribute_length=attribute_length, attribute_format=attribute_format)
         return fileHandle
 
     def CloseFile(self, fileHandle):
@@ -32,8 +32,7 @@ class PF_Manager:
 
 
 class PF_FileHandle:
-    def __init__(self, fileName, attribute_length=15, attribute_format=">ii4sf", 
-                fileHandle=None):
+    def __init__(self, fileName, attribute_length=16, attribute_format=">ii4sf"):
         self.fileName = fileName
         self.BufferPool = {}
         self.DirtyPool = []
@@ -43,6 +42,8 @@ class PF_FileHandle:
         self.current_page_num = -1
 
     def GetFirstPage(self) -> PF_PageHeaderHandle:
+        if 0 in self.BufferPool:
+            return self.BufferPool[0]
         with open(self.fileName, 'rb') as f:
             page_bytes = f.read(PAGE_SIZE)
             headerPage = PF_PageHeaderHandle(self.fileName, self.attribute_length, 
@@ -72,7 +73,7 @@ class PF_FileHandle:
             return self.BufferPool[pageNum]
         else:
             with open(self.fileName, 'rb+') as f:
-                f.peek(pageNum * PAGE_SIZE)
+                f.seek(pageNum * PAGE_SIZE)
                 pData = f.read(PAGE_SIZE)
             page = PF_PageHandle(pageNum, self.attribute_length, self.attribute_format,
                              pData=pData).ReadData()

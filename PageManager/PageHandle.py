@@ -2,7 +2,7 @@ import collections
 import json
 import struct
 from struct import Struct
-
+PAGE_SIZE = 4096
 class PF_PageHeaderHandle:
     def __init__(self, relation_name, attribute_length, header_Data=None):
         self.record_nums = 0
@@ -35,6 +35,8 @@ class PF_PageHeaderHandle:
 
 class PF_PageHandle:
     def __init__(self, pageNum, attribute_length, attribute_format, pData=None):
+        PAGE_SIZE=4096
+        self.lastSlot = 0
         self.pageNum = pageNum
         self.attribute_length = attribute_length
         self.attribute_format = attribute_format
@@ -55,7 +57,7 @@ class PF_PageHandle:
     def ReadData(self):
         l = self.attribute_length
         self.records = collections.defaultdict(list)
-        self.pageNum, self.page_records_nums = struct.unpack(self.pData[:8])
+        self.pageNum, self.page_records_nums = struct.unpack(">ii", self.pData[:8])
         slot_num = 0
 
         structer = Struct(self.attribute_format)
@@ -107,7 +109,11 @@ class PF_PageHandle:
         else:
             return self.max_record_nums - len(self.records)
 
-    def insert_record(self, record):
+    def insert_record(self, record, slot_num=None):
+        if slot_num != None:
+            self.record[slot_num] = record
+            return True
+
         slot = self.search_first_free_slot()
         if slot != None:
             self.records[slot] = record
@@ -120,3 +126,10 @@ class PF_PageHandle:
     def delete_record(self, slot):
         self.records[slot] = []
         self.record_nums -= 1
+
+def extend_to_a_page(s, page_size=PAGE_SIZE):
+    if len(s) >= PAGE_SIZE:
+        print("bigger than a page!")
+        return False
+    else:
+        return s + b" " * (page_size - len(s))
