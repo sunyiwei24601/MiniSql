@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.getcwd())
 from PageManager.PF_Manager import *
 NO_HINT = 0
 PAGE_SIZE = 4096
