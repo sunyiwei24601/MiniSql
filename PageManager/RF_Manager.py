@@ -17,9 +17,14 @@ class RM_Manager:
     def CreateFile(self, fileName, recordSize):
         if recordSize > PAGE_SIZE:
             return 0
-
+        attribute_length = 16
+        attribute_format = '>ii4sf'
         self.pf_manager.CreateFile(fileName)
-        
+        pf_file_handle = self.pf_manager.OpenFile(fileName, attribute_length=attribute_length,
+                             attribute_format=attribute_format)
+        pf_file_handle.AllocatePage()
+        pf_file_handle.ForcePages()
+
     def DestroyFile(self, fileName):
         pass 
 
@@ -31,6 +36,7 @@ class RM_Manager:
         attribute_format = '>ii4sf'
         pf_file_handle = self.pf_manager.OpenFile(fileName, attribute_length=attribute_length,
                              attribute_format=attribute_format)
+        
         return RM_FileHandle(pf_file_handle) 
          
 
@@ -159,7 +165,6 @@ if __name__ == "__main__":
     rm_manager.CreateFile(fileName, 10)
 
     rm_filehandle = rm_manager.OpenFile(fileName)
-    header_page = rm_filehandle.AllocatePage()
 
     ix_manager = IX_Manager().CreateIndex(fileName, indexNo, "int", 4)
     ix_indexhandle = ix_manager.OpenIndex(fileName, indexNo)
@@ -179,6 +184,11 @@ if __name__ == "__main__":
     ix_indexhandle.InsertEntry(relations[2], rid)
 
     ix_indexhandle.ForcePages()
+
+    ix_indexscan = IX_IndexScan()
+    ix_indexscan.OpenScan(ix_indexhandle, NE_OP, 2)
+    for rid in ix_indexscan.GetNextEntry():
+        print (rid)
 
     rm_filehandle.ForcePages()
     pass    

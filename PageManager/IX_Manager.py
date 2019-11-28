@@ -10,7 +10,7 @@ class IX_Manager:
         pass 
 
     def CreateIndex(self, fileName, indexNo, atrrType, attrLength):
-        with open(fileName + "." + indexNo, "wb") as f:
+        with open(fileName + "." + str(indexNo), "wb") as f:
             tree = Tree()
             bts = pickle.dumps(tree)
             pickle.dump(bts, f)
@@ -29,10 +29,10 @@ class IX_Manager:
 
 class IX_IndexHandle:
     def __init__(self, fileName, indexNo):
-        self.filename = fileName + '.' + indexNo
+        self.filename = fileName + '.' + str(indexNo)
         self.indexNo = indexNo
         self.fileName = fileName
-        with open(filename, "rb") as f:
+        with open(self.filename, "rb") as f:
             bts = pickle.load(f)
             self.tree = pickle.loads(bts)
 
@@ -65,7 +65,6 @@ class IX_IndexHandle:
         with open(self.filename, "wb+") as f:
             bts = pickle.dumps(self.tree)
             pickle.dump(bts, f) 
-
 
 class IX_IndexScan:
     def __init__(self):

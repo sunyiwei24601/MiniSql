@@ -8,7 +8,7 @@ class PF_PageHeaderHandle:
     def __init__(self, relation_name, attribute_length, header_Data=None):
         self.record_nums = 0
         self.relation_name = relation_name
-        self.current_number_of_pages = 1
+        self.current_number_of_pages = 0
         self.location_of_pages = {0:0}
         self.attribute_length = attribute_length
         self.header_Data = header_Data

@@ -40,27 +40,29 @@ class PF_Manager:
 
 class PF_FileHandle:
     def __init__(self, fileName, attribute_length=16, attribute_format=">ii4sf"):
+        self.Max_Buffer_Num = 5
     # initiate PF_FileHandle from given format and relation name
         self.fileName = fileName
         self.BufferPool = {}
         self.DirtyPool = []
         # current max page num
-        self.pageNum = 0
+        self.pageNum = -1
         self.attribute_length = attribute_length
         self.attribute_format = attribute_format
         # current page pointing to, start from 0, GetNextPage will read from page1
         self.current_page_num = 0
+        self.recently_used_queue = []
 
     def GetFirstPage(self) -> PF_PageHeaderHandle:
         # get header page, if on bufferpool read it else read from data
         if 0 in self.BufferPool:
-            return self.BufferPool[0]
+            return self.GetBufferPool(0)
         with open(self.fileName, 'rb') as f:
             page_bytes = f.read(PAGE_SIZE)
             headerPage = PF_PageHeaderHandle(self.fileName, self.attribute_length, 
                                             header_Data=page_bytes).read_from_Data()
         self.pageNum = headerPage.current_number_of_pages
-        self.BufferPool[0] = headerPage
+        self.UpdateBufferPool(0, headerPage)
         
         return headerPage
     
@@ -88,17 +90,19 @@ class PF_FileHandle:
 
     def GetThisPage(self, pageNum) -> PF_PageHandle:
         if pageNum in self.BufferPool:
-            return self.BufferPool[pageNum]
+            return self.GetBufferPool(pageNum)
         else:
             with open(self.fileName, 'rb+') as f:
                 f.seek(pageNum * PAGE_SIZE)
                 pData = f.read(PAGE_SIZE)
             page = PF_PageHandle(pageNum, self.attribute_length, self.attribute_format,
                              pData=pData).ReadData()
-            self.BufferPool[pageNum] = page 
+            self.UpdateBufferPool(pageNum, page)
             return page
 
     def AllocatePage(self)-> PF_PageHandle:
+    # if pageNum = -1, create page 0 which is the HeaderPage
+    # else create a new empty page and put it into bufferpool
         pageNum = self.pageNum + 1
         self.pageNum += 1
         # create headfile
@@ -110,9 +114,10 @@ class PF_FileHandle:
             self.BufferPool[0].location_of_pages[pageNum] = 4096 * pageNum
             
 
-        self.BufferPool[pageNum] = new_page
+        self.UpdateBufferPool(pageNum, new_page)
         self.MarkDirty(pageNum)
         self.MarkDirty(0)
+        # self.ForcePages()
         return new_page
         
     def DisposePage(self, pageNum):
@@ -137,7 +142,7 @@ class PF_FileHandle:
             for pagenum in pageNum:
                 
                 f.seek(4096 * pagenum)
-                f.write(self.BufferPool[pagenum].convert_into_bytes())
+                f.write(self.GetBufferPool(pagenum).convert_into_bytes())
                 self.DirtyPool.pop(pagenum)
             f.close()
     
@@ -149,6 +154,34 @@ class PF_FileHandle:
                 return page
         return self.AllocatePage()
 
+    def GetBufferPool(self, PageNum=None):
+    # Get page from bufferpool, remove the pagenum to last of the queue
+        if PageNum == None:
+            return self.BufferPool
+        else:
+            self.recently_used_queue.remove(PageNum)
+            self.recently_used_queue.append(PageNum)
+            return self.BufferPool.get(PageNum)
+        
+    
+    def UpdateBufferPool(self, PageNum=None, page=None):
+    # update new page into the pool and check the bufferpool full or not
+        self.Pool_Update(PageNum)
+        self.BufferPool[PageNum] = page
+
+    def Pool_Update(self, pageNum):
+    # update the queue, if in the queue, move it to the last one
+    # if not in the queue and the queue is full, move it out of bufferpool and queue
+        if pageNum in self.recently_used_queue:
+            self.recently_used_queue.remove(pageNum)
+            self.recently_used_queue.append(pageNum)
+        elif len(self.BufferPool) >= self.Max_Buffer_Num:
+            unpin_pagenum = self.recently_used_queue.pop(0)
+            self.UnpinPage(unpin_pagenum)
+            self.recently_used_queue.append(pageNum)
+        else:
+            self.recently_used_queue.append(pageNum)
+            
 
 def extend_to_a_page(s, page_size=PAGE_SIZE):
     if len(s) >= PAGE_SIZE:
