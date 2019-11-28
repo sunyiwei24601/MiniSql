@@ -43,7 +43,7 @@ class RM_Manager:
 class RM_FileHandle:
     def __init__(self, pf_file_handle:PF_FileHandle=None):
         self.pf_file_handle = pf_file_handle
-        self.pf_file_handle.GetFirstPage()
+        self.header_page = self.pf_file_handle.GetFirstPage()
 
     def __del__(self):
         pass 
@@ -54,7 +54,6 @@ class RM_FileHandle:
         page = self.pf_file_handle.GetThisPage(pageNum)
         record = page.GetData(slotNum)
         return RM_Record(record, rid)
-
 
     def InsertRec(self, record):
         header_page = self.pf_file_handle.GetFirstPage()
@@ -119,10 +118,44 @@ class RM_FileScan:
                 attrType, attrLengeth, attrOffset, 
                 comop, value,
                 pinHint=NO_HINT):
-        pass 
+        self.rm_fileHandle = fileHandle
+        self.pf_fileHandle = self.rm_fileHandle.pf_file_handle
+        self.pageNums = fileHandle.pf_file_handle.pageNum
+        self.comop = comop
+        self.value = value
+        self.attrOffset = attrOffset
+        self.attrType = attrType
 
     def GetNextRec(self):
-        pass 
+        page = self.pf_fileHandle.GetNextPage()
+        print(page)
+        while(page):
+            for record in page.GetData().values():
+                if self.CheckRecord(record):
+                    yield record
+            page = self.pf_fileHandle.GetNextPage()
+
+    def CheckRecord(self, record):
+        attr = record[self.attrOffset]
+        if self.comop == EQ_OP:
+            if attr == self.value:
+                return True
+        if self.comop == GT_OP:
+            if attr > self.value:
+                return True
+        if self.comop == LT_OP:
+            if attr < self.value:
+                return True
+        if self.comop == GE_OP:
+            if attr >= self.value:
+                return True
+        if self.comop == LE_OP:
+            if attr <= self.value:
+                return True
+        if self.comop == NE_OP:
+            if attr != self.value:
+                return True
+        return False
 
     def CloseScan(self):
         pass
@@ -190,6 +223,9 @@ if __name__ == "__main__":
     for rid in ix_indexscan.GetNextEntry():
         print (rid)
 
+    rm_filescan = RM_FileScan()
+    rm_filescan.OpenScan(rm_filehandle, 1, 4, 1, LE_OP, 2)
+    l = rm_filescan.GetNextRec()
     rm_filehandle.ForcePages()
     pass    
     

@@ -45,16 +45,16 @@ class PF_FileHandle:
         self.fileName = fileName
         self.BufferPool = {}
         self.DirtyPool = []
-        # current max page num
+    # current max page num
         self.pageNum = -1
         self.attribute_length = attribute_length
         self.attribute_format = attribute_format
-        # current page pointing to, start from 0, GetNextPage will read from page1
+    # current page pointing to, start from 0, GetNextPage will read from page1
         self.current_page_num = 0
         self.recently_used_queue = []
 
     def GetFirstPage(self) -> PF_PageHeaderHandle:
-        # get header page, if on bufferpool read it else read from data
+    # get header page, if on bufferpool read it else read from data
         if 0 in self.BufferPool:
             return self.GetBufferPool(0)
         with open(self.fileName, 'rb') as f:
@@ -89,6 +89,7 @@ class PF_FileHandle:
         return self.GetThisPage(pageNum - 1)
 
     def GetThisPage(self, pageNum) -> PF_PageHandle:
+    # get specific page and put it into BufferPool
         if pageNum in self.BufferPool:
             return self.GetBufferPool(pageNum)
         else:
