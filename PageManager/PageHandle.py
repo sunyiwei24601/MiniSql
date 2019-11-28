@@ -3,6 +3,7 @@ import json
 import struct
 from struct import Struct
 PAGE_SIZE = 4096
+PAGE_HEADER_LENGTH = 12
 class PF_PageHeaderHandle:
     def __init__(self, relation_name, attribute_length, header_Data=None):
         self.record_nums = 0
@@ -32,6 +33,7 @@ class PF_PageHeaderHandle:
         self.current_number_of_pages = information['current_number_of_pages']
         self.location_of_pages = information['location_of_pages']
         self.attribute_length = information['attribute_length']
+        return self
 
 class PF_PageHandle:
     def __init__(self, pageNum, attribute_length, attribute_format, pData=None):
@@ -44,7 +46,8 @@ class PF_PageHandle:
             self.page_records_nums = 0
         self.pData = pData
         self.records = {}
-        self.max_record_nums = (PAGE_SIZE - 4) // attribute_length
+        self.max_record_slot = 0
+        self.max_record_nums = (PAGE_SIZE - PAGE_HEADER_LENGTH) // attribute_length
     
     def __del__(self):
         pass 
@@ -57,17 +60,20 @@ class PF_PageHandle:
     def ReadData(self):
         l = self.attribute_length
         self.records = collections.defaultdict(list)
-        self.pageNum, self.page_records_nums = struct.unpack(">ii", self.pData[:8])
+        self.pageNum, self.page_records_nums, self.max_record_slot = struct.unpack(">iii", self.pData[:PAGE_HEADER_LENGTH])
         slot_num = 0
 
         structer = Struct(self.attribute_format)
-        for i in range(8, 4096, l):
+        for i in range(PAGE_HEADER_LENGTH, 4096, l):
             record_bytes = self.pData[i:i+l]
             if record_bytes[0] == 32:
                 record = []
             else:
                 record = list(structer.unpack(record_bytes))
+            
             self.records[slot_num] = record
+            if slot_num >= self.max_record_slot:
+                break
             slot_num += 1
         return self
 
@@ -75,7 +81,7 @@ class PF_PageHandle:
         return self.pageNum
 
     def convert_into_bytes(self):
-        page_bytes = struct.pack('>ii', self.pageNum, self.page_records_nums) 
+        page_bytes = struct.pack('>iii', self.pageNum, self.page_records_nums, self.max_record_slot) 
         structer = Struct(self.attribute_format)
         
         records = sorted(self.records.items(), key= lambda x:x[0])
@@ -92,8 +98,7 @@ class PF_PageHandle:
         first_free_slot = 0
         if len(slots) == 0:
             return first_free_slot
-        
-        
+               
         slots = sorted(slots)
         for i in slots:
             if i != first_free_slot:
@@ -118,10 +123,10 @@ class PF_PageHandle:
         if slot != None:
             self.records[slot] = record
             self.page_records_nums += 1
-            return True
+            return slot
         else:
             print("this Page is Full")
-            return False
+            return False 
 
     def delete_record(self, slot):
         self.records[slot] = []

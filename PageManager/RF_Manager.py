@@ -4,6 +4,7 @@ sys.path.append(os.getcwd())
 from PageManager.PF_Manager import *
 NO_HINT = 0
 PAGE_SIZE = 4096
+from PageManager.IX_Manager import *
 class RM_Manager:
     def __init__(self, pfmanager:PF_Manager):
         self.pf_manager = pfmanager
@@ -36,6 +37,7 @@ class RM_Manager:
 class RM_FileHandle:
     def __init__(self, pf_file_handle:PF_FileHandle=None):
         self.pf_file_handle = pf_file_handle
+        self.pf_file_handle.GetFirstPage()
 
     def __del__(self):
         pass 
@@ -47,27 +49,50 @@ class RM_FileHandle:
         record = page.GetData(slotNum)
         return RM_Record(record, rid)
 
+
     def InsertRec(self, record):
         header_page = self.pf_file_handle.GetFirstPage()
         header_page.record_nums += 1
         page = self.pf_file_handle.FindFreePage()
-        page.insert_record(record)
-        pf_file_handle.MarkDirty(page.GetPageNum)
-        pf_file_handle.MarkDirty(0)
+        slot = page.insert_record(record)
+        self.pf_file_handle.MarkDirty(page.GetPageNum())
+        self.pf_file_handle.MarkDirty(0)
+        return RID(page.GetPageNum(), slot)
+
+    def InsertRecs(self, records):
+        page_slots = []
+        header_page = self.pf_file_handle.GetFirstPage()
+        i = 0
+        page = self.pf_file_handle.FindFreePage()
+        for i in range(len(records)):
+            slot = page.insert_record(records[i]) 
+            if slot == False:
+                page_slots2 = self.InsertRecs(records[i:]) 
+                page_slots += page_slots2
+                break
+            else:
+                page_slots.append((page.GetPageNum, slot))
+            header_page.record_nums += 1
         
+        self.pf_file_handle.MarkDirty(page.GetPageNum())
+        self.pf_file_handle.MarkDirty(0)
+        return page_slots
+
     def DeleteRec(self, rid):
+        header_page = self.pf_file_handle.GetFirstPage()
         pageNum = rid.GetPageNum
         slotNum = rid.getSlotNum
         page = self.pf_file_handle.GetThisPage(pageNum)
-        slotNum = rid.getSlotNum
+        page.delete_record(slotNum)
+        header_page.record_nums -= 1
         self.pf_file_handle.MarkDirty(pageNum) 
+        self.pf_file_handle.MarkDirty(0)
 
     def UpdateRec(self, rec):
         rid = rec.GetRid()
         record = rec.GetData()
         pageNum = rid.GetPageNum
         slotNum = rid.getSlotNum
-        page = self.pf_file_handle.GetThisPage(pageNum)
         page = self.pf_file_handle.GetThisPage(pageNum)
         page.insert_record(record, slotNum)
         self.pf_file_handle.MarkDirty(pageNum) 
@@ -125,33 +150,38 @@ class RID:
         return self.slotNum
 
 
-def header_page():
-    record_nums = 5
-    relation_name = "sample"
-    current_number_of_pages = 2
-    first_free_page_num = 1
-    location_of_pages = {0:0, 1:4096}
-    information = {
-        'record_nums': record_nums,
-        'relation_name': relation_name,
-        'current_number_of_pages': current_number_of_pages,
-        "first_free_page_num" : first_free_page_num,
-        "location_of_pages": location_of_pages,
-        'record_size': 15,
-    }
-    return information
 
 if __name__ == "__main__":
     fileName = 'student'
+    indexNo = 1
     pf_manager = PF_Manager()
     rm_manager = RM_Manager(pf_manager)
-    rm_filehandle = rm_manager.OpenFile(fileName)
+    rm_manager.CreateFile(fileName, 10)
 
+    rm_filehandle = rm_manager.OpenFile(fileName)
+    header_page = rm_filehandle.AllocatePage()
+
+    ix_manager = IX_Manager().CreateIndex(fileName, indexNo, "int", 4)
+    ix_indexhandle = ix_manager.OpenIndex(fileName, indexNo)
+
+    relations = [[0, 1, 'Sun'.encode(), 2.5],
+            [1, 2, 'Yes'.encode(), 3.5],
+            [2, 3, 'NOP'.encode(), 4.5],
+            [3, 4, 'You'.encode(), 4.3],
+            [4, 5, 'Tim'.encode(), 2.3]]
     rid1 = RID(1, 0)
     rid2 = RID(1, 1)
-    r1 = rm_filehandle.GetRec(rid1)
-    r2 = rm_filehandle.GetRec(rid2)
+    rid = rm_filehandle.InsertRec(relations[0])
+    ix_indexhandle.InsertEntry(relations[0], rid)
+    rid = rm_filehandle.InsertRec(relations[1])
+    ix_indexhandle.InsertEntry(relations[1], rid)
+    rid = rm_filehandle.InsertRec(relations[2])
+    ix_indexhandle.InsertEntry(relations[2], rid)
 
+    ix_indexhandle.ForcePages()
+
+    rm_filehandle.ForcePages()
+    pass    
     
 
 
