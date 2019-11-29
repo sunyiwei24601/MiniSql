@@ -26,7 +26,7 @@ class MetaDataManager:
             attribute = attributes[offset]
             attribute_type = attribute_types[offset]
             domain = domains[offset]
-            self.create_attribute_data(self, relation_name, attribute, attribute_type, domain, offset)
+            self.create_attribute_data(relation_name, attribute, attribute_type, domain, offset)
     
     def create_attribute_data(self, relation_name, attribute, attribute_type, domain, offset):
         relation = self.relation_data[relation_name]
@@ -72,7 +72,7 @@ class MetaDataManager:
             self.index_data[relation_name][attribute] = offset
 
     def force_metadata(self):
-        data = [self.relaiton_data, self.index_data, self.user_data]
+        data = [self.relation_data, self.index_data, self.user_data]
         with open(self.fileName, 'w') as f:
             json.dump(data,f)
         

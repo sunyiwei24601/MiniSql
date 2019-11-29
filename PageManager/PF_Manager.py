@@ -17,7 +17,6 @@ class PF_Manager:
     def CreateFile(self, fileName):
     #create an empty relation file
         f = open(fileName, "wb")
-        
         f.close()
     
     def DestroyFile(self, fileName):

@@ -14,11 +14,11 @@ class RM_Manager:
     def __del__(self):
         pass 
 
-    def CreateFile(self, fileName, recordSize):
+    def CreateFile(self, fileName, recordSize, attribute_length, attribute_format):
         if recordSize > PAGE_SIZE:
             return 0
-        attribute_length = 16
-        attribute_format = '>ii4sf'
+        # attribute_length = 8
+        # attribute_format = '>ii'
         self.pf_manager.CreateFile(fileName)
         pf_file_handle = self.pf_manager.OpenFile(fileName, attribute_length=attribute_length,
                              attribute_format=attribute_format)
@@ -31,9 +31,7 @@ class RM_Manager:
     def CloseFile(self, fileHandle):
         pass
 
-    def OpenFile(self, fileName):
-        attribute_length = 16
-        attribute_format = '>ii4sf'
+    def OpenFile(self, fileName, attribute_length=8, attribute_format=">ii"):
         pf_file_handle = self.pf_manager.OpenFile(fileName, attribute_length=attribute_length,
                              attribute_format=attribute_format)
         
@@ -76,7 +74,7 @@ class RM_FileHandle:
                 page_slots += page_slots2
                 break
             else:
-                page_slots.append((page.GetPageNum, slot))
+                page_slots.append(RID(page.GetPageNum, slot))
             header_page.record_nums += 1
         
         self.pf_file_handle.MarkDirty(page.GetPageNum())
