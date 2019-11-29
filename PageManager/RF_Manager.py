@@ -116,7 +116,7 @@ class RM_FileScan:
 
     def OpenScan(self, fileHandle,
                 attrType, attrLengeth, attrOffset, 
-                comop, value,
+                comop=None, value=None,
                 pinHint=NO_HINT):
         self.rm_fileHandle = fileHandle
         self.pf_fileHandle = self.rm_fileHandle.pf_file_handle
@@ -127,10 +127,14 @@ class RM_FileScan:
         self.attrType = attrType
 
     def GetNextRec(self):
+    # should return record and rid together
         page = self.pf_fileHandle.GetNextPage()
-        print(page)
         while(page):
-            for record in page.GetData().values():
+            pageNum = page.GetPageNum()
+            for slotNum, record in page.GetData().items():
+                if self.comop == None:
+                    yield RID(pageNum, slotNum), record
+                    continue
                 if self.CheckRecord(record):
                     yield record
             page = self.pf_fileHandle.GetNextPage()
