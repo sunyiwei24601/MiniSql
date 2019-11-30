@@ -1,4 +1,5 @@
 import sys
+sys.setrecursionlimit(10000)
 import os
 sys.path.append(os.getcwd())
 from SystemManagement.System_MetaData import *
@@ -25,6 +26,7 @@ class InsertExecutor:
                 index_lists[offset].InsertEntry(record, rid)
         for index in index_lists:
             index.ForcePages()
+        rm_filehandle.ForcePages()
     
     def InsertTuple(self, relation_name, record):
         index_lists = []
@@ -35,10 +37,10 @@ class InsertExecutor:
         ix_indexhandle.ForcePages()
 
 if __name__ == "__main__":
-    relations = [[i, 1] for i in range(1000)]
+    relations = [[i, 1] for i in range(100000)]
     attributes = ["NO", "VAL"]
     attribute_types = ["int", "int"]
-    relation_name = "R_1_10000"
+    relation_name = "R_1_100000"
     domains = [[], []]
     metadata_filename = "metadata.json"
     pf_manager = PF_Manager()
@@ -49,7 +51,9 @@ if __name__ == "__main__":
 
     insertExecutor = InsertExecutor(rm_manager, ix_manager, relation_name)
     insertExecutor.InsertTuples(relation_name, relations)
-
+    pf_filehandle = insertExecutor.rm_filehandle.pf_file_handle
+    pf_filehandle.GetThisPage(1)
+    pass
 
 
             

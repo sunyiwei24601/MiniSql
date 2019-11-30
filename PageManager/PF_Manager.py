@@ -39,7 +39,7 @@ class PF_Manager:
 
 class PF_FileHandle:
     def __init__(self, fileName, attribute_length=16, attribute_format=">ii4sf"):
-        self.Max_Buffer_Num = 5
+        self.Max_Buffer_Num = 40
     # initiate PF_FileHandle from given format and relation name
         self.fileName = fileName
         self.BufferPool = {}
@@ -87,7 +87,7 @@ class PF_FileHandle:
             return None
         return self.GetThisPage(pageNum - 1)
 
-    def GetThisPage(self, pageNum) -> PF_PageHandle:
+    def GetThisPage(self, pageNum, update_buffer_pool = True) -> PF_PageHandle:
     # get specific page and put it into BufferPool
         if pageNum in self.BufferPool:
             return self.GetBufferPool(pageNum)
@@ -97,7 +97,8 @@ class PF_FileHandle:
                 pData = f.read(PAGE_SIZE)
             page = PF_PageHandle(pageNum, self.attribute_length, self.attribute_format,
                              pData=pData).ReadData()
-            self.UpdateBufferPool(pageNum, page)
+            if update_buffer_pool == True:
+                self.UpdateBufferPool(pageNum, page)
             return page
 
     def AllocatePage(self)-> PF_PageHandle:
@@ -133,25 +134,31 @@ class PF_FileHandle:
             self.BufferPool.pop(pageNum)
         else:
             self.ForcePages(pageNum=[pageNum])
+            self.BufferPool.pop(pageNum)
 
     def ForcePages(self, pageNum=None):
     # write pages in dirtypool and remove them from dirty pool
         if pageNum == None:
             pageNum = self.DirtyPool
-        with open(self.fileName, 'wb+') as f:
+        with open(self.fileName, 'rb+') as f:
             for pagenum in pageNum:
                 
                 f.seek(4096 * pagenum)
-                f.write(self.GetBufferPool(pagenum).convert_into_bytes())
-                self.DirtyPool.pop(pagenum)
+                page = self.BufferPool[pagenum]
+                f.write(page.convert_into_bytes())
+                self.DirtyPool.remove(pagenum)
             f.close()
     
     def FindFreePage(self, record_nums=1):
     # scan all the pages, check it free nums, if not , allocate a new page
+    # just scan will not allocate new pages into bufferpool
         for pageNum in range(1, self.pageNum + 1):
-            page = self.GetThisPage(pageNum)
+
+            page = self.GetThisPage(pageNum, update_buffer_pool=False)
             if page.check_free() > record_nums:
+                self.UpdateBufferPool(page.GetPageNum(), page)
                 return page
+            
         return self.AllocatePage()
 
     def GetBufferPool(self, PageNum=None):
@@ -159,13 +166,16 @@ class PF_FileHandle:
         if PageNum == None:
             return self.BufferPool
         else:
-            self.recently_used_queue.remove(PageNum)
-            self.recently_used_queue.append(PageNum)
+            if PageNum not in self.recently_used_queue:
+                self.recently_used_queue.append(PageNum)
+            else:
+                self.recently_used_queue.remove(PageNum)
+                self.recently_used_queue.append(PageNum)
             return self.BufferPool.get(PageNum)
         
     
     def UpdateBufferPool(self, PageNum=None, page=None):
-    # update new page into the pool and check the bufferpool full or not
+    # date new page into the pool and check the bufferpool full or not
         self.Pool_Update(PageNum)
         self.BufferPool[PageNum] = page
 
@@ -177,6 +187,9 @@ class PF_FileHandle:
             self.recently_used_queue.append(pageNum)
         elif len(self.BufferPool) >= self.Max_Buffer_Num:
             unpin_pagenum = self.recently_used_queue.pop(0)
+            if unpin_pagenum == 0 :
+                self.recently_used_queue.append(0)
+                unpin_pagenum = self.recently_used_queue.pop(0)
             self.UnpinPage(unpin_pagenum)
             self.recently_used_queue.append(pageNum)
         else:
@@ -184,7 +197,7 @@ class PF_FileHandle:
             
 
 def extend_to_a_page(s, page_size=PAGE_SIZE):
-    if len(s) >= PAGE_SIZE:
+    if len(s) > PAGE_SIZE:
         print("bigger than a page!")
         return False
     else:

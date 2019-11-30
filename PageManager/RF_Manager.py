@@ -69,7 +69,9 @@ class RM_FileHandle:
         page = self.pf_file_handle.FindFreePage()
         for i in range(len(records)):
             slot = page.insert_record(records[i]) 
-            if slot == False:
+            if slot == None:
+                self.pf_file_handle.MarkDirty(page.GetPageNum())
+                self.pf_file_handle.MarkDirty(0)
                 page_slots2 = self.InsertRecs(records[i:]) 
                 page_slots += page_slots2
                 break
@@ -77,8 +79,7 @@ class RM_FileHandle:
                 page_slots.append(RID(page.GetPageNum, slot))
             header_page.record_nums += 1
         
-        self.pf_file_handle.MarkDirty(page.GetPageNum())
-        self.pf_file_handle.MarkDirty(0)
+
         return page_slots
 
     def DeleteRec(self, rid):

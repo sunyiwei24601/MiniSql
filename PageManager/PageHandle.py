@@ -94,7 +94,8 @@ class PF_PageHandle:
     
     def search_first_free_slot(self):
         slots = self.records.keys()
-        
+        if len(slots) >= self.max_record_nums:
+            return None
         first_free_slot = 0
         if len(slots) == 0:
             return first_free_slot
@@ -109,7 +110,7 @@ class PF_PageHandle:
     
     def check_free(self):
         if len(self.records.keys()) == self.max_record_nums:
-            if self.search_first_free_slot() >= self.max_record_nums:
+            if self.search_first_free_slot() == None:
                 return False
         else:
             return self.max_record_nums - len(self.records)
@@ -123,17 +124,19 @@ class PF_PageHandle:
         if slot != None:
             self.records[slot] = record
             self.page_records_nums += 1
+            if slot > self.max_record_slot:
+                self.max_record_slot += 1
             return slot
         else:
-            print("this Page is Full")
-            return False 
+            print("Page{} is Full".format(self.GetPageNum()))
+            return None 
 
     def delete_record(self, slot):
         self.records[slot] = []
         self.record_nums -= 1
 
 def extend_to_a_page(s, page_size=PAGE_SIZE):
-    if len(s) >= PAGE_SIZE:
+    if len(s) > PAGE_SIZE:
         print("bigger than a page!")
         return False
     else:
