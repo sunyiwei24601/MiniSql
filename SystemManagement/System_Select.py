@@ -307,20 +307,20 @@ if __name__ == "__main__":
             "type": "AND",
             "left": {
                 "type": "SEARCH",
-                "attribute": Attribute("R_1_10000", "NO"),
+                "attribute": Attribute("Rel_i_1_10000", "NO"),
                 "op": GE_OP,
                 "value": 10,
             },
             "right":{
                 "type": "SEARCH",
-                "attribute": Attribute("R_1_10000", "NO"),
+                "attribute": Attribute("Rel_i_1_10000", "NO"),
                 "op": LE_OP,
                 "value": 100,
             }
         },
         "right":{
             "type":"SEARCH",
-            "attribute": Attribute("R_1_10000", "VAL"),
+            "attribute": Attribute("Rel_i_1_10000", "VAL"),
             "op": GE_OP,
             "value": 1,
         }
@@ -361,7 +361,7 @@ if __name__ == "__main__":
         "type": "SEARCH",
         "value": 100,
         "op": LE_OP,
-        "attribute": Attribute("R_1_10000", "NO")
+        "attribute": Attribute("Rel_i_1_10000", "NO")
         
     }
 
@@ -373,9 +373,9 @@ if __name__ == "__main__":
     records = {(i,i) for i in range(50)}
     right_tuples = Tuples(records, attributes[2:])
     t = join_executor.JoinExecution(left_tuples, right_tuples, [Attribute("A", "NO"),Attribute("B", "VAL")])
-    on_attributes = [Attribute("R_1_1000", "NO"), Attribute("B", "NO")]
-    t = join_executor.JoinExecution("R_1_1000", right_tuples, on_attributes)
-    project_attributes = [Attribute("_1_1000", "VAL"), Attribute("B", "NO") ]
+    on_attributes = [Attribute("Rel_i_1_1000", "NO"), Attribute("B", "NO")]
+    t = join_executor.JoinExecution("Rel_i_1_1000", right_tuples, on_attributes)
+    project_attributes = [Attribute("Rel_i_1_1000", "VAL"), Attribute("B", "NO") ]
     p = project_executor.ProjectionExecution(t, project_attributes)
     io.output_tuples(p)
     pass
