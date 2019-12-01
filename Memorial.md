@@ -7,6 +7,7 @@
 5. ~~buffer pool management~~
 6. ~~file scan~~ 
 7. ~~insert return slot  (to update index)~~
+8. read page header only(sperate from read page data)
 
 ## Index
 

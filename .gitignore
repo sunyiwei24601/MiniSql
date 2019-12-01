@@ -1,2 +1,4 @@
 /__pycache__/
 /PageManager/__pycache__/
+*/__pycache__/
+/SystemManagement/__pycache__/

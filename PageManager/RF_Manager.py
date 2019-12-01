@@ -76,7 +76,7 @@ class RM_FileHandle:
                 page_slots += page_slots2
                 break
             else:
-                page_slots.append(RID(page.GetPageNum, slot))
+                page_slots.append(RID(page.GetPageNum(), slot))
             header_page.record_nums += 1
         
 
@@ -84,8 +84,8 @@ class RM_FileHandle:
 
     def DeleteRec(self, rid):
         header_page = self.pf_file_handle.GetFirstPage()
-        pageNum = rid.GetPageNum
-        slotNum = rid.getSlotNum
+        pageNum = rid.GetPageNum()
+        slotNum = rid.getSlotNum()
         page = self.pf_file_handle.GetThisPage(pageNum)
         page.delete_record(slotNum)
         header_page.record_nums -= 1
@@ -95,8 +95,8 @@ class RM_FileHandle:
     def UpdateRec(self, rec):
         rid = rec.GetRid()
         record = rec.GetData()
-        pageNum = rid.GetPageNum
-        slotNum = rid.getSlotNum
+        pageNum = rid.GetPageNum()
+        slotNum = rid.getSlotNum()
         page = self.pf_file_handle.GetThisPage(pageNum)
         page.insert_record(record, slotNum)
         self.pf_file_handle.MarkDirty(pageNum) 
@@ -114,7 +114,7 @@ class RM_FileScan:
         pass 
 
     def OpenScan(self, fileHandle,
-                attrType, attrLengeth, attrOffset, 
+                attrType=None, attrLengeth=None, attrOffset=None, 
                 comop=None, value=None,
                 pinHint=NO_HINT):
         self.rm_fileHandle = fileHandle
@@ -124,6 +124,7 @@ class RM_FileScan:
         self.value = value
         self.attrOffset = attrOffset
         self.attrType = attrType
+        return self
 
     def GetNextRec(self):
     # should return record and rid together
@@ -135,7 +136,7 @@ class RM_FileScan:
                     yield RID(pageNum, slotNum), record
                     continue
                 if self.CheckRecord(record):
-                    yield record
+                    yield RID(pageNum, slotNum), record
             page = self.pf_fileHandle.GetNextPage()
 
     def CheckRecord(self, record):

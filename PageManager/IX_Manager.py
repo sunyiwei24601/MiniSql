@@ -1,5 +1,6 @@
 from BTrees.OOBTree import OOBTree as Tree
 import pickle
+import json
 import sys
 import os
 sys.path.append(os.getcwd())
@@ -10,10 +11,10 @@ class IX_Manager:
         pass 
 
     def CreateIndex(self, fileName, indexNo, atrrType, attrLength):
-        with open(fileName + "." + str(indexNo), "wb") as f:
+        with open(fileName + "." + str(indexNo), "w", encoding="utf-8") as f:
             tree = Tree()
-            bts = pickle.dumps(tree)
-            pickle.dump(bts, f)
+            tree_dict = dict(tree.items())
+            json.dump(tree_dict, f)
         return self
         
 
@@ -32,9 +33,14 @@ class IX_IndexHandle:
         self.filename = fileName + '.' + str(indexNo)
         self.indexNo = indexNo
         self.fileName = fileName
-        with open(self.filename, "rb") as f:
-            bts = pickle.load(f)
-            self.tree = pickle.loads(bts)
+        with open(self.filename, "r", encoding="utf-8") as f:
+            tree_dict = json.load(f)
+            
+            keys = list(map(int, tree_dict.keys()))
+            values = list(tree_dict.values())
+            new_tree_dict = dict(zip(keys, values))
+            self.tree = Tree()
+            self.tree.update(new_tree_dict)
 
         pass 
 
@@ -62,10 +68,12 @@ class IX_IndexHandle:
             return False
 
     def ForcePages(self):
-        with open(self.filename, "wb+") as f:
-            bts = pickle.dumps(self.tree)
-            pickle.dump(bts, f) 
+        with open(self.filename, "w", encoding="utf-8") as f:
 
+            tree_dict = dict(self.tree.items())
+            json.dump(tree_dict, f) 
+            
+    
 class IX_IndexScan:
     def __init__(self):
         pass 
@@ -76,7 +84,7 @@ class IX_IndexScan:
     def OpenScan(self, indexHandle, comOp, value, pinHint=NO_HINT):
         tree = indexHandle.tree
         if comOp == EQ_OP:
-            t = tree.get(value)
+            t = tree.values(max=value, min=value)
         if comOp == LT_OP:
             t = tree.values(max=value, excludemax=True)
         if comOp == GT_OP:
@@ -92,7 +100,9 @@ class IX_IndexScan:
         if comOp == NO_OP:
             t = tree.values()
         self.t = t
-        
+
+        return self
+
     def GetNextEntry(self):
         for sets in self.t :
             for rid in sets:

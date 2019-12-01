@@ -2,7 +2,7 @@ from PageManager.IX_Manager import *
 import json
 class MetaDataManager:
     def __init__(self, fileName):
-        with open(fileName) as f:
+        with open(fileName, "r+") as f:
             try:
                 self.data = json.load(f)
             except:
@@ -19,9 +19,11 @@ class MetaDataManager:
         if self.relation_data.get(relation_name, None) == None:
             self.relation_data[relation_name] = {}
             #maybe update if we get new attributes once at all 
-            self.attribute_total_length = 0
-            self.number_of_attributes = len(attributes)
-            self.attribute_format = ""
+            self.relation_data[relation_name]["attribute_total_length"] = self.get_attribute_length(attribute_types)
+            self.relation_data[relation_name]["number_of_attributes"] = len(attributes)
+            self.relation_data[relation_name]["attribute_format"] = self.get_attribute_format(attribute_types)
+            self.relation_data[relation_name]["attributes"] = {}
+            
         for offset in range(len(attributes)):
             attribute = attributes[offset]
             attribute_type = attribute_types[offset]
@@ -29,7 +31,7 @@ class MetaDataManager:
             self.create_attribute_data(relation_name, attribute, attribute_type, domain, offset)
     
     def create_attribute_data(self, relation_name, attribute, attribute_type, domain, offset):
-        relation = self.relation_data[relation_name]
+        relation = self.relation_data[relation_name]["attributes"]
         relation[attribute] = {}
         relation[attribute]["type"] = attribute_type
         relation[attribute]['length'] = self.get_attribute_length([attribute_type])

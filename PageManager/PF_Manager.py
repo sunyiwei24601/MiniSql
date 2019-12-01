@@ -13,7 +13,6 @@ class PF_Manager:
     def __init__(self):
         pass 
     
-    
     def CreateFile(self, fileName):
     #create an empty relation file
         f = open(fileName, "wb")
@@ -39,7 +38,7 @@ class PF_Manager:
 
 class PF_FileHandle:
     def __init__(self, fileName, attribute_length=16, attribute_format=">ii4sf"):
-        self.Max_Buffer_Num = 40
+        self.Max_Buffer_Num = 50
     # initiate PF_FileHandle from given format and relation name
         self.fileName = fileName
         self.BufferPool = {}
@@ -141,7 +140,7 @@ class PF_FileHandle:
         if pageNum == None:
             pageNum = self.DirtyPool
         with open(self.fileName, 'rb+') as f:
-            for pagenum in pageNum:
+            for pagenum in pageNum[:]:
                 
                 f.seek(4096 * pagenum)
                 page = self.BufferPool[pagenum]
