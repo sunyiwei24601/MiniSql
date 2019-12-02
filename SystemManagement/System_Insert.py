@@ -37,10 +37,10 @@ class InsertExecutor:
         ix_indexhandle.ForcePages()
 
 if __name__ == "__main__":
-    relations = [[i, 1] for i in range(1, 100001)]
+    relations = [[i, i] for i in range(1, 100001)]
     attributes = ["NO", "VAL"]
     attribute_types = ["int", "int"]
-    relation_name = "Rel_i_1_100000"
+    relation_name = "Rel_i_i_100000"
     domains = [[], []]
     metadata_filename = "metadata.json"
     #things should be loaded from metadata

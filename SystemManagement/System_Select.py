@@ -33,17 +33,30 @@ class SelectExecutor():
             return self.SelectTuples(entity, conditions)
     
     def SelectFromRelation(self, relation_name, conditions):
+        
+
+
         relation_metadata = self.metadata_manager.relation_data[relation_name]
         self.attribute_length = relation_metadata['attribute_total_length']
         self.attribute_format = relation_metadata['attribute_format']
         self.attributes = relation_metadata['attributes']
         self.relation_name = relation_name
+        if conditions == None:
+            key = list(self.attributes.keys())[0]
+            conditions = {
+                "type": "SEARCH",
+                "op": NO_OP,
+                "value": 0,
+                "attribute": Attribute(relation_name, key)
+            }
+
         self.rm_filehandle = self.rm_manager.OpenFile(relation_name, self.attribute_length, self.attribute_format)
         records = self.ExecuteConditions(conditions)
         attributes = [Attribute(relation_name, attribute) for attribute in self.attributes]
         return Tuples(records, attributes)
         
     def ExecuteConditions(self, conditions):
+
         if conditions["type"] in ("AND", "OR"):
             left_condition = conditions["left"]
             right_condition = conditions["right"]
@@ -86,7 +99,7 @@ class SelectExecutor():
                 return left_results & right_results
             elif conditions["type"] == "OR":
                 return left_results | right_results
-        elif conditions["type"] == "Search":
+        elif conditions["type"] == "SEARCH":
             attribute = conditions['attribute']
             comop = conditions["op"]
             value = conditions['value']
@@ -263,7 +276,6 @@ class JoinExecutor():
         record_nums = rm_filehandle.header_page.record_nums
         return record_nums, attributes, rm_filehandle
 
-
 class ProjectionExecutor():
     def __init__(self, rm_manager, ix_manager, metadata_manager):
         self.rm_manager = rm_manager
@@ -287,7 +299,30 @@ class ProjectionExecutor():
                 return offset
             offset += 1
 
-    
+
+class OrderExecutor():
+    def __init__(self):
+        pass 
+
+    def OrderExecution(self, tuples, value, limit, sort):
+        attributes = tuples.attributes
+        offset = self.check_attribute_offset(attributes, value)
+        if sort == "desc":
+            reverse = True
+        else:
+            reverse = False
+        records = sorted(tuples.records, key=lambda x: x[offset], reverse=reverse)
+        if limit:
+            records = records[:limit]
+        return Tuples(records, attributes)
+
+    def check_attribute_offset(self, attributes, sort_attribute):
+        offset = 0 
+        for attr in attributes:
+            if sort_attribute == attr:
+                return offset 
+            offset += 1
+
 class Attribute:
     def __init__(self, relation_name, attribute):
         self.relation_name = relation_name
@@ -378,4 +413,5 @@ if __name__ == "__main__":
     project_attributes = [Attribute("Rel_i_1_1000", "VAL"), Attribute("B", "NO") ]
     p = project_executor.ProjectionExecution(t, project_attributes)
     io.output_tuples(p)
+    
     pass
