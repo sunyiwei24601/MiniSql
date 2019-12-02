@@ -10,10 +10,10 @@ class Interactive_Component:
         pass
 
     def input_command(self):
-        # self.login()
+        self.login()
         parser = Parser()
         while(True):
-            prompt = "Please input SQL command:"
+            prompt = "Please input SQL command:\n"
             sql_statement = input(prompt)
             result = parser.parse(sql_statement)
             self.output_tuples(result)
@@ -21,8 +21,8 @@ class Interactive_Component:
 
     def output_tuples(self, tuples, limit=10):
         attributes = tuples.attributes
-        records = tuples.records
-        header = [ i.relation_name + "." + i.attribute for i in attributes]
+        records = list(tuples.records)
+        header = [ i.name for i in attributes]
         table = PrettyTable(header)
         for record in records[:10]:
             table.add_row(record)

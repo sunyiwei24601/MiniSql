@@ -289,7 +289,7 @@ class ProjectionExecutor():
         attributes = tuples.attributes
         attribute_offsets = [self.get_attribute_offset(i, attributes) for i in select_attributes]
         records = [[record[i] for i in attribute_offsets] for record in records]
-        attributes = [attributes[i] for i in attribute_offsets]
+        attributes = select_attributes
         return Tuples(records, attributes)
 
     def get_attribute_offset(self, select_attribute, attributes):
@@ -324,9 +324,13 @@ class OrderExecutor():
             offset += 1
 
 class Attribute:
-    def __init__(self, relation_name, attribute):
+    def __init__(self, relation_name, attribute, name=None):
         self.relation_name = relation_name
         self.attribute = attribute
+        if name == None:
+            self.name = relation_name + "." + attribute
+        else:
+            self.name = name
 
     def __eq__(self, att):
         if att.relation_name == self.relation_name and \

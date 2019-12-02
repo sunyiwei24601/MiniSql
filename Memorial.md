@@ -17,7 +17,7 @@
 
 ## System management
 
-1. show interactive command on cmd
+1. ~~show interactive command on cmd~~
 2. ~~print out records~~
 3. ~~recieve DDL string, recognize and create metadata~~
 4. ~~manage metadata~~
@@ -25,10 +25,22 @@
 6. ~~different users login~~
 7. ~~index create/delete~~
 8. ~~recieve Insert string, recognize, insert and create~~ 
-9. recieve Query string, recognize  return records
+9. ~~recieve Query string, recognize  return records~~
 10. ~~join executions~~
 
 ## Demo things
 
-1. constraint conflicts
-2. 
+1. ~~constraint conflicts~~
+
+
+
+## Possible Updates
+
+1. delete/update
+2. ~~as (projection, relation~~)
+3. ~~constraint~~
+4. group by (from dateframe)
+5. execution in projection
+6. where join optimizer
+7. left join, right join
+
