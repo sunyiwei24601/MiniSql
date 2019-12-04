@@ -10,7 +10,7 @@ class Interactive_Component:
         pass
 
     def input_command(self):
-        self.login()
+        # self.login()
         parser = Parser()
         while(True):
             prompt = "Please input SQL command:\n"
@@ -19,7 +19,7 @@ class Interactive_Component:
             self.output_tuples(result)
 
 
-    def output_tuples(self, tuples, limit=10):
+    def output_tuples(self, tuples, limit=102):
         attributes = tuples.attributes
         records = list(tuples.records)
         header = [ i.name for i in attributes]

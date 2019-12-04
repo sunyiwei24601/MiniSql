@@ -37,18 +37,19 @@ class InsertExecutor:
         ix_indexhandle.ForcePages()
 
 if __name__ == "__main__":
-    relations = [[i, i] for i in range(1, 100001)]
+    relations = [[i, i] for i in range(1, 100)]
+    relations = [[2,3]]
     attributes = ["NO", "VAL"]
     attribute_types = ["int", "int"]
-    relation_name = "Rel_i_i_100000"
+    relation_name = "Apple"
     domains = [[], []]
     metadata_filename = "metadata.json"
     #things should be loaded from metadata
     pf_manager = PF_Manager()
     rm_manager = RM_Manager(pf_manager)
     ix_manager = IX_Manager()
-    createExecutor = CreateExecutor(metadata_filename, rm_manager, ix_manager)
-    createExecutor.create_relation(relation_name, attributes, attribute_types, domains)
+    # createExecutor = CreateExecutor(metadata_filename, rm_manager, ix_manager)
+    # createExecutor.create_relation(relation_name, attributes, attribute_types, domains)
 
     insertExecutor = InsertExecutor(rm_manager, ix_manager, relation_name)
     insertExecutor.InsertTuples(relation_name, relations)
